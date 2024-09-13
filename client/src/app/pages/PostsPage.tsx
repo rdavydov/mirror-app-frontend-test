@@ -22,26 +22,29 @@ const PostsPage: React.FC<PostsPageProps> = () => {
     const fetchPosts = async () => {
       const fetchedPosts = await usePostsService.getPosts();
       setPosts(fetchedPosts);
-
-      const calculatePostsPerPage = () => {
-        if (settings.layout.current === "grid") {
-          return Math.floor(
-            settings.layout.params.grid.rows *
-              settings.layout.params.grid.columns
-          );
-        } else if (settings.layout.current === "masonry") {
-          return Math.floor(
-            settings.layout.params.masonry.rows *
-              settings.layout.params.masonry.columns
-          );
-        }
-        return 1;
-      };
-
-      setPostsPerPage(calculatePostsPerPage());
     };
 
     fetchPosts();
+  }, []); // Получение постов при монтировании компонента
+
+  useEffect(() => {
+    const calculatePostsPerPage = () => {
+      if (settings.layout.current === "grid") {
+        return Math.floor(
+          settings.layout.params.grid.rows * settings.layout.params.grid.columns
+        );
+      } else if (settings.layout.current === "masonry") {
+        return Math.floor(
+          settings.layout.params.masonry.rows *
+            settings.layout.params.masonry.columns
+        );
+      }
+      return 1;
+    };
+
+    setPostsPerPage(calculatePostsPerPage());
+    setCurrentPage(1);
+    setDisplayedPosts([]);
   }, [settings]);
 
   useEffect(() => {
