@@ -13,7 +13,8 @@ const PostsPage: React.FC<PostsPageProps> = () => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [postsPerPage, setPostsPerPage] = useState(1);
-  const [currentPosts, setCurrentPosts] = useState<PostType[]>([]);
+  const [displayedPosts, setDisplayedPosts] = useState<PostType[]>([]);
+  const [hasMore, setHasMore] = useState(true);
 
   const { settings } = useSettingsStore();
 
@@ -44,17 +45,32 @@ const PostsPage: React.FC<PostsPageProps> = () => {
   }, [settings]);
 
   useEffect(() => {
+    if (settings.navigation === "pagination") {
+      updatePaginatedPosts();
+    } else {
+      updateLoadMorePosts();
+    }
+  }, [posts, postsPerPage, currentPage, settings.navigation]);
+
+  const updatePaginatedPosts = () => {
     const indexOfLastPost = currentPage * postsPerPage;
     const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    setCurrentPosts(posts.slice(indexOfFirstPost, indexOfLastPost));
-  }, [posts, postsPerPage, currentPage]);
+    setDisplayedPosts(posts.slice(indexOfFirstPost, indexOfLastPost));
+    setHasMore(indexOfLastPost < posts.length);
+  };
+
+  const updateLoadMorePosts = () => {
+    const newPosts = posts.slice(0, currentPage * postsPerPage);
+    setDisplayedPosts(newPosts);
+    setHasMore(newPosts.length < posts.length);
+  };
 
   const renderLayout = () => {
     switch (settings.layout.current) {
       case "grid":
         return (
           <GridLayout
-            posts={currentPosts}
+            posts={displayedPosts}
             columns={settings.layout.params.grid.columns}
             rows={settings.layout.params.grid.rows}
             template={settings.template}
@@ -63,7 +79,7 @@ const PostsPage: React.FC<PostsPageProps> = () => {
       case "masonry":
         return (
           <MasonryLayout
-            posts={currentPosts}
+            posts={displayedPosts}
             columns={settings.layout.params.masonry.columns}
             rows={settings.layout.params.masonry.rows}
             template={settings.template}
@@ -74,7 +90,15 @@ const PostsPage: React.FC<PostsPageProps> = () => {
     }
   };
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const loadMore = () => {
+    if (hasMore) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
 
   return (
     <div className="posts-page">
@@ -88,7 +112,7 @@ const PostsPage: React.FC<PostsPageProps> = () => {
           currentPage={currentPage}
         />
       ) : (
-        <LoadMoreButton onClick={() => setCurrentPage(currentPage + 1)} />
+        hasMore && <LoadMoreButton onClick={loadMore} />
       )}
     </div>
   );
